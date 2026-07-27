@@ -1,0 +1,16 @@
+CREATE TABLE income (
+    id SERIAL PRIMARY KEY,
+
+    cycle_id INT NOT NULL REFERENCES salary_cycles(id) ON DELETE CASCADE,
+
+    type VARCHAR(50) NOT NULL,
+
+    amount NUMERIC(12,2) NOT NULL,
+
+    income_date DATE NOT NULL,
+
+    note TEXT,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

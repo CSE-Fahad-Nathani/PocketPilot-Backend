@@ -1,0 +1,93 @@
+export const GET_CYCLE_ANALYSIS = `
+SELECT
+    id,
+    cycle_name,
+    start_date,
+    end_date,
+    planned_budget,
+    total_income,
+    total_expense,
+    total_saved
+FROM salary_cycles
+WHERE id = $1;
+`;
+
+export const GET_CYCLE_INCOMES = `
+SELECT
+    id,
+    type,
+    amount,
+    income_date,
+    note
+FROM income
+WHERE cycle_id = $1
+ORDER BY income_date ASC, id ASC;
+`;
+
+export const GET_CYCLE_CATEGORIES = `
+SELECT
+    c.id,
+    c.name,
+    c.type,
+    c.budget AS planned_budget,
+
+    COALESCE(SUM(e.amount),0) AS spent_amount,
+
+    c.budget - COALESCE(SUM(e.amount),0) AS remaining_amount
+
+FROM categories c
+
+LEFT JOIN expenses e
+ON e.category_id = c.id
+
+WHERE c.cycle_id = $1
+
+GROUP BY
+    c.id,
+    c.name,
+    c.type,
+    c.budget
+
+ORDER BY c.sort_order, c.id;
+`;
+
+export const GET_CYCLE_EXPENSES = `
+SELECT
+    e.id,
+    e.category_id,
+    c.name AS category_name,
+    e.reason,
+    e.amount,
+    e.expense_date,
+    e.note
+
+FROM expenses e
+
+JOIN categories c
+ON c.id = e.category_id
+
+WHERE e.cycle_id = $1
+
+ORDER BY e.expense_date ASC, e.id ASC;
+`;
+
+export const GET_CYCLE_SAVINGS = `
+SELECT
+    s.id,
+    s.bucket_id,
+    sb.name AS bucket_name,
+    s.type,
+    s.title,
+    s.amount,
+    s.transaction_date,
+    s.note
+
+FROM savings s
+
+LEFT JOIN saving_buckets sb
+ON sb.id = s.bucket_id
+
+WHERE s.cycle_id = $1
+
+ORDER BY s.transaction_date ASC, s.id ASC;
+`;

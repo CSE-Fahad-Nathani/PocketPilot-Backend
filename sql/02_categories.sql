@@ -1,0 +1,21 @@
+CREATE TABLE categories (
+    id SERIAL PRIMARY KEY,
+
+    cycle_id INT NOT NULL REFERENCES salary_cycles(id) ON DELETE CASCADE,
+
+    name VARCHAR(100) NOT NULL,
+
+    type VARCHAR(50) NOT NULL DEFAULT 'DEFAULT',
+
+    budget NUMERIC(12,2) NOT NULL DEFAULT 0,
+
+    icon VARCHAR(100),
+    color VARCHAR(20),
+
+    is_archived BOOLEAN DEFAULT FALSE,
+
+    sort_order INT DEFAULT 0,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

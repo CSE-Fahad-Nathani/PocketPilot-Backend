@@ -1,0 +1,15 @@
+CREATE TABLE saving_buckets (
+    id SERIAL PRIMARY KEY,
+
+    name VARCHAR(100) NOT NULL,
+
+    balance NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (balance >= 0),
+
+    icon VARCHAR(100),
+    color VARCHAR(20),
+
+    is_archived BOOLEAN DEFAULT FALSE,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
