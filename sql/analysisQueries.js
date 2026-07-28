@@ -114,3 +114,27 @@ WHERE
 
 ORDER BY e.expense_date ASC, e.id ASC;
 `;
+
+export const GET_CURRENT_MONTH_FUEL_ANALYSIS = `
+SELECT
+    e.id AS expense_id,
+    e.expense_date,
+
+    e.amount::FLOAT8 AS amount,
+
+    ((e.extra_data->>'liters')::NUMERIC)::FLOAT8 AS liters,
+    ((e.extra_data->>'distance')::NUMERIC)::FLOAT8 AS distance,
+    ((e.extra_data->>'mileage')::NUMERIC)::FLOAT8 AS mileage
+
+FROM expenses e
+
+WHERE
+    e.reason = 'Access Fuel'
+    AND e.cycle_id = (
+        SELECT MAX(cycle_id)
+        FROM expenses
+        WHERE reason = 'Access Fuel'
+    )
+
+ORDER BY e.expense_date ASC, e.id ASC;
+`;
