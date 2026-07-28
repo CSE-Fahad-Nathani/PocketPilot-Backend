@@ -91,3 +91,26 @@ WHERE s.cycle_id = $1
 
 ORDER BY s.transaction_date ASC, s.id ASC;
 `;
+
+export const GET_CYCLE_FUEL_ANALYSIS = `
+SELECT
+    e.id AS expense_id,
+    e.expense_date,
+
+    e.amount::FLOAT8 AS amount,
+
+    ((e.extra_data->>'liters')::NUMERIC)::FLOAT8 AS liters,
+    ((e.extra_data->>'distance')::NUMERIC)::FLOAT8 AS distance,
+    ((e.extra_data->>'mileage')::NUMERIC)::FLOAT8 AS mileage
+
+FROM expenses e
+
+JOIN categories c
+ON c.id = e.category_id
+
+WHERE
+    e.cycle_id = $1
+    AND c.type = 'fuel'
+
+ORDER BY e.expense_date ASC, e.id ASC;
+`;
