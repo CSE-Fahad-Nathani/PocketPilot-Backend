@@ -3,13 +3,16 @@ import { recalculateCycleTotals } from "./cycleTotalsService.js";
 
 import {
   CREATE_CATEGORY,
+  CREATE_CATEGORY_WITH_SORT,
   GET_CATEGORIES,
+  GET_CATEGORIES_BY_IDS,
   UPDATE_CATEGORY,
   ARCHIVE_CATEGORY,
   GET_CATEGORY_BY_ID,
   CHECK_CATEGORY_EXISTS,
   CHECK_CATEGORY_EXISTS_FOR_UPDATE,
 } from "../sql/categoryQueries.js";
+import { GET_CYCLE_BY_ID } from "../sql/trackedBalanceQueries.js";
 
 export const createCategory = async (
   cycleId,
@@ -120,4 +123,108 @@ export const getCategoryById = async (id) => {
   }
 
   return result.rows[0];
+};
+
+export const importCategoriesFromCycle = async (
+  targetCycleId,
+  sourceCycleId,
+  categoryIds
+) => {
+  if (Number(targetCycleId) === Number(sourceCycleId)) {
+    const error = new Error("Source and target cycles must be different.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const [targetCycle, sourceCycle] = await Promise.all([
+    pool.query(GET_CYCLE_BY_ID, [targetCycleId]),
+    pool.query(GET_CYCLE_BY_ID, [sourceCycleId]),
+  ]);
+
+  if (!targetCycle.rows.length) {
+    const error = new Error("Target cycle not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (!sourceCycle.rows.length) {
+    const error = new Error("Source cycle not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const normalizedIds = Array.from(
+    new Set(
+      (categoryIds || [])
+        .map((id) => Number(id))
+        .filter((id) => Number.isInteger(id) && id > 0)
+    )
+  );
+
+  if (!normalizedIds.length) {
+    const error = new Error("Select at least one budget to import.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const sourceResult = await pool.query(GET_CATEGORIES_BY_IDS, [
+    sourceCycleId,
+    normalizedIds,
+  ]);
+
+  if (!sourceResult.rows.length) {
+    const error = new Error("No matching budgets found in the previous cycle.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const existing = await pool.query(GET_CATEGORIES, [targetCycleId]);
+  const existingNames = new Set(
+    existing.rows.map((row) => String(row.name).toLowerCase())
+  );
+
+  const created = [];
+  let skipped = 0;
+
+  for (const category of sourceResult.rows) {
+    const nameKey = String(category.name).toLowerCase();
+
+    if (existingNames.has(nameKey)) {
+      skipped += 1;
+      continue;
+    }
+
+    const result = await pool.query(CREATE_CATEGORY_WITH_SORT, [
+      targetCycleId,
+      category.name,
+      category.type,
+      category.budget,
+      category.icon || "",
+      category.color || "",
+      category.sort_order || 0,
+    ]);
+
+    existingNames.add(nameKey);
+    created.push(result.rows[0]);
+  }
+
+  if (created.length) {
+    await recalculateCycleTotals(targetCycleId);
+  }
+
+  if (!created.length) {
+    const error = new Error(
+      skipped
+        ? "All selected budgets already exist in this cycle."
+        : "No budgets were imported."
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return {
+    imported: created,
+    importedCount: created.length,
+    skippedCount: skipped,
+  };
 };

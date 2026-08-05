@@ -63,3 +63,26 @@ AND LOWER(name) = LOWER($2)
 AND id <> $3
 AND is_archived = FALSE;
 `;
+
+export const GET_CATEGORIES_BY_IDS = `
+SELECT *
+FROM categories
+WHERE cycle_id = $1
+AND id = ANY($2::int[])
+AND is_archived = FALSE
+ORDER BY sort_order ASC, id ASC;
+`;
+
+export const CREATE_CATEGORY_WITH_SORT = `
+INSERT INTO categories (
+    cycle_id,
+    name,
+    type,
+    budget,
+    icon,
+    color,
+    sort_order
+)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING *;
+`;

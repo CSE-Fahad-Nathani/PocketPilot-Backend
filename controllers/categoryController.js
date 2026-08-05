@@ -137,6 +137,48 @@ export const updateCategory = async (req, res) => {
   }
 };
 
+export const importCategoriesFromCycle = async (req, res) => {
+  try {
+    const { targetCycleId, sourceCycleId, categoryIds } = req.body;
+
+    if (!targetCycleId) {
+      return res.status(400).json({
+        success: false,
+        message: "Target cycle ID is required.",
+        data: null,
+      });
+    }
+
+    if (!sourceCycleId) {
+      return res.status(400).json({
+        success: false,
+        message: "Source cycle ID is required.",
+        data: null,
+      });
+    }
+
+    const data = await categoryService.importCategoriesFromCycle(
+      targetCycleId,
+      sourceCycleId,
+      categoryIds
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: `${data.importedCount} budget${
+        data.importedCount === 1 ? "" : "s"
+      } imported successfully.`,
+      data,
+    });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Internal server error.",
+      data: null,
+    });
+  }
+};
+
 export const archiveCategory = async (req, res) => {
   try {
     const { id } = req.body;
