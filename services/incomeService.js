@@ -36,6 +36,18 @@ export const getIncome = async (cycleId) => {
   return result.rows;
 };
 
+export const getIncomeById = async (id) => {
+  const result = await pool.query(GET_INCOME_BY_ID, [id]);
+
+  if (result.rows.length === 0) {
+    const error = new Error("Income not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return result.rows[0];
+};
+
 export const updateIncome = async (
   id,
   type,

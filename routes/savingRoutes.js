@@ -10,12 +10,9 @@ import {
 const router = express.Router();
 
 router.post("/create", createSaving);
-
-router.get("/", getAllSavings);
-router.get("/:id", getSavingById);
-
-router.put("/:id", updateSaving);
-
-router.delete("/:id", deleteSaving);
+router.post("/list", getAllSavings);
+router.post("/get", getSavingById);
+router.post("/update", updateSaving);
+router.post("/delete", deleteSaving);
 
 export default router;

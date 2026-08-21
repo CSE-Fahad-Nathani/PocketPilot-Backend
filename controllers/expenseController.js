@@ -1,7 +1,12 @@
 import * as expenseService from "../services/expenseService.js";
+import {
+  assertCycleOwnedByUser,
+  requireUserId,
+} from "../utils/ownership.js";
 
 export const createExpense = async (req, res) => {
   try {
+    const userId = requireUserId(req.body);
     const {
       cycleId,
       categoryId,
@@ -12,13 +17,7 @@ export const createExpense = async (req, res) => {
       extraData = {},
     } = req.body;
 
-    if (!cycleId) {
-      return res.status(400).json({
-        success: false,
-        message: "Cycle ID is required.",
-        data: null,
-      });
-    }
+    await assertCycleOwnedByUser(userId, cycleId);
 
     if (!categoryId) {
       return res.status(400).json({
@@ -78,15 +77,10 @@ export const createExpense = async (req, res) => {
 
 export const getExpenses = async (req, res) => {
   try {
-    const { cycleId } = req.query;
+    const userId = requireUserId(req.body);
+    const { cycleId } = req.body;
 
-    if (!cycleId) {
-      return res.status(400).json({
-        success: false,
-        message: "Cycle ID is required.",
-        data: null,
-      });
-    }
+    await assertCycleOwnedByUser(userId, cycleId);
 
     const expenses = await expenseService.getExpenses(cycleId);
 
@@ -106,6 +100,7 @@ export const getExpenses = async (req, res) => {
 
 export const updateExpense = async (req, res) => {
   try {
+    const userId = requireUserId(req.body);
     const {
       id,
       categoryId,
@@ -123,6 +118,9 @@ export const updateExpense = async (req, res) => {
         data: null,
       });
     }
+
+    const existing = await expenseService.getExpenseById(id);
+    await assertCycleOwnedByUser(userId, existing.cycle_id);
 
     if (!categoryId) {
       return res.status(400).json({
@@ -182,6 +180,7 @@ export const updateExpense = async (req, res) => {
 
 export const deleteExpense = async (req, res) => {
   try {
+    const userId = requireUserId(req.body);
     const { id } = req.body;
 
     if (!id) {
@@ -191,6 +190,9 @@ export const deleteExpense = async (req, res) => {
         data: null,
       });
     }
+
+    const existing = await expenseService.getExpenseById(id);
+    await assertCycleOwnedByUser(userId, existing.cycle_id);
 
     const expense = await expenseService.deleteExpense(id);
 
@@ -210,9 +212,19 @@ export const deleteExpense = async (req, res) => {
 
 export const getExpenseById = async (req, res) => {
   try {
-    const { id } = req.params;
+    const userId = requireUserId(req.body);
+    const { id } = req.body;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Expense ID is required.",
+        data: null,
+      });
+    }
 
     const expense = await expenseService.getExpenseById(id);
+    await assertCycleOwnedByUser(userId, expense.cycle_id);
 
     return res.json({
       success: true,

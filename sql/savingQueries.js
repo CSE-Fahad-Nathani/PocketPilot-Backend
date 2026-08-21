@@ -17,8 +17,12 @@ SELECT
     s.*,
     sb.name AS bucket_name
 FROM savings s
+JOIN salary_cycles sc
+ON s.cycle_id = sc.id
 LEFT JOIN saving_buckets sb
 ON s.bucket_id = sb.id
+WHERE sc.user_id = $1
+  AND ($2::int IS NULL OR s.cycle_id = $2)
 ORDER BY transaction_date DESC, id DESC;
 `;
 

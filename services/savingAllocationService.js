@@ -127,8 +127,8 @@ export const distributeSaving = async (
 
 
 
-export const getPendingSavings = async () => {
-  const result = await pool.query(GET_PENDING_SAVINGS);
+export const getPendingSavings = async (userId) => {
+  const result = await pool.query(GET_PENDING_SAVINGS, [userId]);
 
   return result.rows;
 };

@@ -1,8 +1,15 @@
 import * as trackedBalanceService from "../services/trackedBalanceService.js";
+import {
+  assertCycleOwnedByUser,
+  requireUserId,
+} from "../utils/ownership.js";
 
 export const getTrackedBalanceSettings = async (req, res) => {
   try {
-    const { cycleId } = req.params;
+    const userId = requireUserId(req.body);
+    const { cycleId } = req.body;
+    await assertCycleOwnedByUser(userId, cycleId);
+
     const data = await trackedBalanceService.getTrackedBalanceSettings(cycleId);
 
     return res.json({
@@ -21,8 +28,9 @@ export const getTrackedBalanceSettings = async (req, res) => {
 
 export const saveTrackedBalanceSettings = async (req, res) => {
   try {
-    const { cycleId } = req.params;
-    const { includeLeft, categoryIds } = req.body;
+    const userId = requireUserId(req.body);
+    const { cycleId, includeLeft, categoryIds } = req.body;
+    await assertCycleOwnedByUser(userId, cycleId);
 
     const data = await trackedBalanceService.saveTrackedBalanceSettings(
       cycleId,

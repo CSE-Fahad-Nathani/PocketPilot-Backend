@@ -104,8 +104,8 @@ export const getCycleAnalysis = async (cycleId) => {
 
 
 
-export const getCurrentMonthFuelAnalysis = async () => {
-  const result = await pool.query(GET_CURRENT_MONTH_FUEL_ANALYSIS);
+export const getCurrentMonthFuelAnalysis = async (cycleId) => {
+  const result = await pool.query(GET_CURRENT_MONTH_FUEL_ANALYSIS, [cycleId]);
 
   const fuelGraph = result.rows;
 

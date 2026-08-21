@@ -1,7 +1,9 @@
 import * as cycleService from "../services/cycleService.js";
+import { requireUserId } from "../utils/ownership.js";
 
 export const createCycle = async (req, res) => {
   try {
+    const userId = requireUserId(req.body);
     const { cycleName, startDate } = req.body;
 
     if (!cycleName?.trim()) {
@@ -21,6 +23,7 @@ export const createCycle = async (req, res) => {
     }
 
     const cycle = await cycleService.createCycle(
+      userId,
       cycleName.trim(),
       startDate
     );
@@ -31,20 +34,9 @@ export const createCycle = async (req, res) => {
       data: cycle,
     });
   } catch (error) {
-    if (
-      error.message ===
-      "Please end the current active cycle before creating a new one."
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: error.message,
-        data: null,
-      });
-    }
-
-    return res.status(500).json({
+    return res.status(error.statusCode || 500).json({
       success: false,
-      message: "Internal server error.",
+      message: error.message || "Internal server error.",
       data: null,
     });
   }
@@ -52,50 +44,13 @@ export const createCycle = async (req, res) => {
 
 export const getActiveCycle = async (req, res) => {
   try {
-    const cycle = await cycleService.getActiveCycle();
+    const userId = requireUserId(req.body);
+    const cycle = await cycleService.getActiveCycle(userId);
 
     return res.json({
       success: true,
       message: "Active cycle fetched successfully.",
       data: cycle,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-      data: null,
-    });
-  }
-};
-
-export const getCycleHistory = async (req, res) => {
-  try {
-    const cycles = await cycleService.getCycleHistory();
-
-    return res.json({
-      success: true,
-      message: "Cycle history fetched successfully.",
-      data: cycles,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error.",
-      data: null,
-    });
-  }
-};
-
-export const getCycleAnalysis = async (req, res) => {
-  try {
-    const { cycleId } = req.params;
-
-    const analysis = await cycleService.getCycleAnalysis(cycleId);
-
-    return res.json({
-      success: true,
-      message: "Cycle analysis fetched successfully.",
-      data: analysis,
     });
   } catch (error) {
     return res.status(error.statusCode || 500).json({
@@ -106,9 +61,28 @@ export const getCycleAnalysis = async (req, res) => {
   }
 };
 
+export const getCycleHistory = async (req, res) => {
+  try {
+    const userId = requireUserId(req.body);
+    const cycles = await cycleService.getCycleHistory(userId);
+
+    return res.json({
+      success: true,
+      message: "Cycle history fetched successfully.",
+      data: cycles,
+    });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Internal server error.",
+      data: null,
+    });
+  }
+};
 
 export const verifyEndCycle = async (req, res) => {
   try {
+    const userId = requireUserId(req.body);
     const { cycleId } = req.body;
 
     if (!cycleId) {
@@ -119,7 +93,7 @@ export const verifyEndCycle = async (req, res) => {
       });
     }
 
-    const summary = await cycleService.verifyEndCycle(cycleId);
+    const summary = await cycleService.verifyEndCycle(userId, cycleId);
 
     return res.json({
       success: true,
@@ -137,6 +111,7 @@ export const verifyEndCycle = async (req, res) => {
 
 export const endCycle = async (req, res) => {
   try {
+    const userId = requireUserId(req.body);
     const { cycleId, endDate } = req.body;
 
     if (!cycleId) {
@@ -155,10 +130,7 @@ export const endCycle = async (req, res) => {
       });
     }
 
-    const cycle = await cycleService.endCycle(
-      endDate,
-      cycleId
-    );
+    const cycle = await cycleService.endCycle(userId, endDate, cycleId);
 
     return res.json({
       success: true,

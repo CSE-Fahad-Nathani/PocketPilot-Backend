@@ -1,7 +1,14 @@
 import * as savingAllocationService from "../services/savingAllocationService.js";
+import * as savingService from "../services/savingService.js";
+import {
+  assertBucketOwnedByUser,
+  assertCycleOwnedByUser,
+  requireUserId,
+} from "../utils/ownership.js";
 
 export const distributeSaving = async (req, res) => {
   try {
+    const userId = requireUserId(req.body);
     const { savingId, allocations } = req.body;
 
     if (!savingId) {
@@ -19,6 +26,9 @@ export const distributeSaving = async (req, res) => {
         data: null,
       });
     }
+
+    const saving = await savingService.getSavingById(savingId);
+    await assertCycleOwnedByUser(userId, saving.cycle_id);
 
     for (const allocation of allocations) {
       if (!allocation.bucketId) {
@@ -39,6 +49,8 @@ export const distributeSaving = async (req, res) => {
           data: null,
         });
       }
+
+      await assertBucketOwnedByUser(userId, allocation.bucketId);
     }
 
     const result = await savingAllocationService.distributeSaving(
@@ -60,22 +72,21 @@ export const distributeSaving = async (req, res) => {
   }
 };
 
-
 export const getPendingSavings = async (req, res) => {
   try {
-      const savings =
-          await savingAllocationService.getPendingSavings();
+    const userId = requireUserId(req.body);
+    const savings = await savingAllocationService.getPendingSavings(userId);
 
-      return res.status(200).json({
-          success: true,
-          message: "Pending savings fetched successfully.",
-          data: savings,
-      });
+    return res.status(200).json({
+      success: true,
+      message: "Pending savings fetched successfully.",
+      data: savings,
+    });
   } catch (error) {
-      return res.status(500).json({
-          success: false,
-          message: error.message,
-          data: null,
-      });
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message,
+      data: null,
+    });
   }
 };

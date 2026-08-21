@@ -128,13 +128,13 @@ SELECT
 
 FROM expenses e
 
+JOIN categories c
+ON c.id = e.category_id
+
 WHERE
-    e.reason = 'Access Fuel'
-    AND e.cycle_id = (
-        SELECT MAX(cycle_id)
-        FROM expenses
-        WHERE reason = 'Access Fuel'
-    )
+    e.cycle_id = $1
+    AND c.type = 'fuel'
+    AND c.is_archived = FALSE
 
 ORDER BY e.expense_date ASC, e.id ASC;
 `;

@@ -1,7 +1,12 @@
 import * as categoryService from "../services/categoryService.js";
+import {
+  assertCycleOwnedByUser,
+  requireUserId,
+} from "../utils/ownership.js";
 
 export const createCategory = async (req, res) => {
   try {
+    const userId = requireUserId(req.body);
     const {
       cycleId,
       name,
@@ -11,13 +16,7 @@ export const createCategory = async (req, res) => {
       color = "",
     } = req.body;
 
-    if (!cycleId) {
-      return res.status(400).json({
-        success: false,
-        message: "Cycle ID is required.",
-        data: null,
-      });
-    }
+    await assertCycleOwnedByUser(userId, cycleId);
 
     if (!name?.trim()) {
       return res.status(400).json({
@@ -60,15 +59,10 @@ export const createCategory = async (req, res) => {
 
 export const getCategories = async (req, res) => {
   try {
-    const { cycleId } = req.query;
+    const userId = requireUserId(req.body);
+    const { cycleId } = req.body;
 
-    if (!cycleId) {
-      return res.status(400).json({
-        success: false,
-        message: "Cycle ID is required.",
-        data: null,
-      });
-    }
+    await assertCycleOwnedByUser(userId, cycleId);
 
     const categories = await categoryService.getCategories(cycleId);
 
@@ -88,6 +82,7 @@ export const getCategories = async (req, res) => {
 
 export const updateCategory = async (req, res) => {
   try {
+    const userId = requireUserId(req.body);
     const {
       id,
       name,
@@ -113,6 +108,7 @@ export const updateCategory = async (req, res) => {
     }
 
     const existingCategory = await categoryService.getCategoryById(id);
+    await assertCycleOwnedByUser(userId, existingCategory.cycle_id);
 
     const category = await categoryService.updateCategory(
       id,
@@ -139,6 +135,7 @@ export const updateCategory = async (req, res) => {
 
 export const importCategoriesFromCycle = async (req, res) => {
   try {
+    const userId = requireUserId(req.body);
     const { targetCycleId, sourceCycleId, categoryIds } = req.body;
 
     if (!targetCycleId) {
@@ -156,6 +153,9 @@ export const importCategoriesFromCycle = async (req, res) => {
         data: null,
       });
     }
+
+    await assertCycleOwnedByUser(userId, targetCycleId);
+    await assertCycleOwnedByUser(userId, sourceCycleId);
 
     const data = await categoryService.importCategoriesFromCycle(
       targetCycleId,
@@ -181,6 +181,7 @@ export const importCategoriesFromCycle = async (req, res) => {
 
 export const archiveCategory = async (req, res) => {
   try {
+    const userId = requireUserId(req.body);
     const { id } = req.body;
 
     if (!id) {
@@ -190,6 +191,9 @@ export const archiveCategory = async (req, res) => {
         data: null,
       });
     }
+
+    const existingCategory = await categoryService.getCategoryById(id);
+    await assertCycleOwnedByUser(userId, existingCategory.cycle_id);
 
     const category = await categoryService.archiveCategory(id);
 

@@ -8,6 +8,6 @@ import {
 const router = express.Router();
 
 router.post("/distribute", distributeSaving);
-router.get("/pending", getPendingSavings);
+router.post("/pending", getPendingSavings);
 
 export default router;

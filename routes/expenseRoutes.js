@@ -12,9 +12,9 @@ const router = express.Router();
 
 router.post("/create", createExpense);
 
-router.get("/", getExpenses);
+router.post("/list", getExpenses);
 
-router.get("/:id", getExpenseById);
+router.post("/get", getExpenseById);
 
 router.post("/update", updateExpense);
 

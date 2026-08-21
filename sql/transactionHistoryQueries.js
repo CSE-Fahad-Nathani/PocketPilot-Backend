@@ -11,5 +11,6 @@ SELECT
 FROM bucket_transactions bt
 JOIN saving_buckets sb
 ON bt.bucket_id = sb.id
+WHERE sb.user_id = $1
 ORDER BY bt.created_at DESC, bt.id DESC;
 `;

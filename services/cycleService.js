@@ -9,80 +9,83 @@ import {
   END_CYCLE,
 } from "../sql/cycleQueries.js";
 
-export const createCycle = async (cycleName, startDate) => {
-  const active = await getActiveCycle();
+export const createCycle = async (userId, cycleName, startDate) => {
+  const active = await getActiveCycle(userId);
 
   if (active) {
-    throw new Error(
+    const error = new Error(
       "Please end the current active cycle before creating a new one."
     );
+    error.statusCode = 400;
+    throw error;
   }
 
-  const result = await pool.query(CREATE_CYCLE, [cycleName, startDate]);
+  const result = await pool.query(CREATE_CYCLE, [
+    userId,
+    cycleName,
+    startDate,
+  ]);
   return result.rows[0];
 };
 
-export const getActiveCycle = async () => {
-  const result = await pool.query(GET_ACTIVE_CYCLE);
+export const getActiveCycle = async (userId) => {
+  const result = await pool.query(GET_ACTIVE_CYCLE, [userId]);
   return result.rows[0] || null;
 };
 
-export const getCycleHistory = async () => {
-  const result = await pool.query(GET_CYCLE_HISTORY);
-
+export const getCycleHistory = async (userId) => {
+  const result = await pool.query(GET_CYCLE_HISTORY, [userId]);
   return result.rows;
 };
 
-export const getCycleAnalysis = async (cycleId) => {
-  const result = await pool.query(GET_CYCLE_ANALYSIS, [cycleId]);
+export const getCycleAnalysis = async (userId, cycleId) => {
+  const result = await pool.query(GET_CYCLE_ANALYSIS, [cycleId, userId]);
 
   if (!result.rows.length) {
-    const error = new Error("Cycle not found.");
-    error.statusCode = 404;
+    const error = new Error("Access denied.");
+    error.statusCode = 403;
     throw error;
   }
 
   return result.rows[0];
 };
 
-export const verifyEndCycle = async (cycleId) => {
-  const result = await pool.query(
-    VERIFY_END_CYCLE,
-    [cycleId]
-  );
+export const verifyEndCycle = async (userId, cycleId) => {
+  const result = await pool.query(VERIFY_END_CYCLE, [cycleId, userId]);
 
   if (!result.rows.length) {
-    const error = new Error("Active cycle not found.");
-    error.statusCode = 404;
+    const error = new Error("Access denied.");
+    error.statusCode = 403;
     throw error;
   }
 
   return result.rows[0];
 };
 
-export const endCycle = async (endDate, cycleId) => {
+export const endCycle = async (userId, endDate, cycleId) => {
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
 
-    const verificationResult = await client.query(
-      VERIFY_END_CYCLE,
-      [cycleId]
-    );
+    const verificationResult = await client.query(VERIFY_END_CYCLE, [
+      cycleId,
+      userId,
+    ]);
 
     if (!verificationResult.rows.length) {
-      const error = new Error("Active cycle not found.");
-      error.statusCode = 404;
+      const error = new Error("Access denied.");
+      error.statusCode = 403;
       throw error;
     }
 
     const verification = verificationResult.rows[0];
 
-    const endCycleResult = await client.query(
-      END_CYCLE,
-      [endDate, cycleId]
-    );
+    const endCycleResult = await client.query(END_CYCLE, [
+      endDate,
+      cycleId,
+      userId,
+    ]);
 
     if (Number(verification.total_saved) > 0) {
       await createSaving(

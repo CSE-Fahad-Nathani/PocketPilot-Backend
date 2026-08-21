@@ -1,8 +1,16 @@
 import * as analysisService from "../services/analysisService.js";
+import * as cycleService from "../services/cycleService.js";
+import {
+  assertCycleOwnedByUser,
+  requireUserId,
+} from "../utils/ownership.js";
 
 export const getCycleAnalysis = async (req, res) => {
   try {
-    const { cycleId } = req.params;
+    const userId = requireUserId(req.body);
+    const { cycleId } = req.body;
+
+    await assertCycleOwnedByUser(userId, cycleId);
 
     const analysis = await analysisService.getCycleAnalysis(cycleId);
 
@@ -22,7 +30,35 @@ export const getCycleAnalysis = async (req, res) => {
 
 export const getCurrentMonthFuelAnalysis = async (req, res) => {
   try {
-    const analysis = await analysisService.getCurrentMonthFuelAnalysis();
+    const userId = requireUserId(req.body);
+    const activeCycle = await cycleService.getActiveCycle(userId);
+
+    if (!activeCycle) {
+      return res.json({
+        success: true,
+        message: "Current month fuel analysis fetched successfully.",
+        data: {
+          summary: {
+            total_fuel_expense: 0,
+            total_liters: 0,
+            total_distance: 0,
+            average_mileage: 0,
+            best_mileage: 0,
+            worst_mileage: 0,
+            average_cost_per_fill: 0,
+            average_liters_per_fill: 0,
+            average_cost_per_liter: 0,
+          },
+          history: [],
+        },
+      });
+    }
+
+    await assertCycleOwnedByUser(userId, activeCycle.id);
+
+    const analysis = await analysisService.getCurrentMonthFuelAnalysis(
+      activeCycle.id
+    );
 
     return res.json({
       success: true,

@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.post("/create", createIncome);
 
-router.get("/", getIncome);
+router.post("/list", getIncome);
 
 router.post("/update", updateIncome);
 

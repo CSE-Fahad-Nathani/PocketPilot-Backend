@@ -51,10 +51,14 @@ SELECT
 
 FROM savings s
 
+JOIN salary_cycles sc
+ON s.cycle_id = sc.id
+
 LEFT JOIN saving_allocations sa
 ON s.id = sa.saving_id
 
 WHERE s.type = 'DEPOSIT'
+  AND sc.user_id = $1
 
 GROUP BY
     s.id,

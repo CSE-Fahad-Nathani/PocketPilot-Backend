@@ -14,12 +14,10 @@ import {
 const router = express.Router();
 
 router.post("/create", createCycle);
-router.get("/active", getActiveCycle);
-router.get("/history", getCycleHistory);
-router.get("/:cycleId/tracked-balance", getTrackedBalanceSettings);
-router.put("/:cycleId/tracked-balance", saveTrackedBalanceSettings);
-
-
+router.post("/active", getActiveCycle);
+router.post("/history", getCycleHistory);
+router.post("/tracked-balance", getTrackedBalanceSettings);
+router.post("/tracked-balance/save", saveTrackedBalanceSettings);
 router.post("/verify-end", verifyEndCycle);
 router.post("/end", endCycle);
 

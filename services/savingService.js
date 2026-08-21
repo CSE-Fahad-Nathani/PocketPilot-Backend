@@ -35,8 +35,11 @@ export const createSaving = async (
   return result.rows[0];
 };
 
-export const getAllSavings = async () => {
-  const result = await pool.query(GET_ALL_SAVINGS);
+export const getAllSavings = async (userId, cycleId = null) => {
+  const result = await pool.query(GET_ALL_SAVINGS, [
+    userId,
+    cycleId ? Number(cycleId) : null,
+  ]);
   return result.rows;
 };
 

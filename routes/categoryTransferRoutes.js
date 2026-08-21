@@ -12,9 +12,9 @@ const router = express.Router();
 
 router.post("/create", createTransfer);
 
-router.get("/", getTransfers);
+router.post("/list", getTransfers);
 
-router.get("/:id", getTransferById);
+router.post("/get", getTransferById);
 
 router.post("/update", updateTransfer);
 

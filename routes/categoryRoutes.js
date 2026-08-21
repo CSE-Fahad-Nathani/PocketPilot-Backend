@@ -14,7 +14,7 @@ router.post("/create", createCategory);
 
 router.post("/import-from-cycle", importCategoriesFromCycle);
 
-router.get("/", getCategories);
+router.post("/list", getCategories);
 
 router.post("/update", updateCategory);
 

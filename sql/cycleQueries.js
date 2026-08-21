@@ -1,20 +1,21 @@
 export const CREATE_CYCLE = `
 INSERT INTO salary_cycles (
+    user_id,
     cycle_name,
     start_date,
     status
 )
-VALUES ($1, $2, 'ACTIVE')
+VALUES ($1, $2, $3, 'ACTIVE')
 RETURNING *;
 `;
 
 export const GET_ACTIVE_CYCLE = `
 SELECT *
 FROM salary_cycles
-WHERE status = 'ACTIVE'
+WHERE user_id = $1
+AND status = 'ACTIVE'
 LIMIT 1;
 `;
-
 
 export const GET_CYCLE_HISTORY = `
 SELECT
@@ -29,10 +30,10 @@ SELECT
     created_at,
     updated_at
 FROM salary_cycles
-WHERE status = 'COMPLETED'
+WHERE user_id = $1
+AND status = 'COMPLETED'
 ORDER BY updated_at DESC, id DESC;
 `;
-
 
 export const GET_CYCLE_ANALYSIS = `
 SELECT
@@ -45,10 +46,9 @@ SELECT
     total_expense,
     total_saved
 FROM salary_cycles
-WHERE id = $1;
+WHERE id = $1
+AND user_id = $2;
 `;
-
-
 
 export const VERIFY_END_CYCLE = `
 SELECT
@@ -59,6 +59,7 @@ SELECT
     total_saved
 FROM salary_cycles
 WHERE id = $1
+AND user_id = $2
 AND status = 'ACTIVE';
 `;
 
@@ -69,5 +70,6 @@ SET
     status = 'COMPLETED',
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $2
+AND user_id = $3
 RETURNING *;
 `;

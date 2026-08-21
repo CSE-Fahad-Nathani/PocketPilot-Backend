@@ -1,4 +1,8 @@
 import * as incomeService from "../services/incomeService.js";
+import {
+  assertCycleOwnedByUser,
+  requireUserId,
+} from "../utils/ownership.js";
 
 const INCOME_TYPES = [
   "Salary",
@@ -11,6 +15,7 @@ const INCOME_TYPES = [
 
 export const createIncome = async (req, res) => {
   try {
+    const userId = requireUserId(req.body);
     const {
       cycleId,
       type,
@@ -19,13 +24,7 @@ export const createIncome = async (req, res) => {
       note = "",
     } = req.body;
 
-    if (!cycleId) {
-      return res.status(400).json({
-        success: false,
-        message: "Cycle ID is required.",
-        data: null,
-      });
-    }
+    await assertCycleOwnedByUser(userId, cycleId);
 
     if (!type) {
       return res.status(400).json({
@@ -83,15 +82,10 @@ export const createIncome = async (req, res) => {
 
 export const getIncome = async (req, res) => {
   try {
-    const { cycleId } = req.query;
+    const userId = requireUserId(req.body);
+    const { cycleId } = req.body;
 
-    if (!cycleId) {
-      return res.status(400).json({
-        success: false,
-        message: "Cycle ID is required.",
-        data: null,
-      });
-    }
+    await assertCycleOwnedByUser(userId, cycleId);
 
     const income = await incomeService.getIncome(cycleId);
 
@@ -111,6 +105,7 @@ export const getIncome = async (req, res) => {
 
 export const updateIncome = async (req, res) => {
   try {
+    const userId = requireUserId(req.body);
     const {
       id,
       type,
@@ -126,6 +121,9 @@ export const updateIncome = async (req, res) => {
         data: null,
       });
     }
+
+    const existing = await incomeService.getIncomeById(id);
+    await assertCycleOwnedByUser(userId, existing.cycle_id);
 
     if (!type || !INCOME_TYPES.includes(type)) {
       return res.status(400).json({
@@ -175,6 +173,7 @@ export const updateIncome = async (req, res) => {
 
 export const deleteIncome = async (req, res) => {
   try {
+    const userId = requireUserId(req.body);
     const { id } = req.body;
 
     if (!id) {
@@ -184,6 +183,9 @@ export const deleteIncome = async (req, res) => {
         data: null,
       });
     }
+
+    const existing = await incomeService.getIncomeById(id);
+    await assertCycleOwnedByUser(userId, existing.cycle_id);
 
     const income = await incomeService.deleteIncome(id);
 

@@ -8,7 +8,6 @@ import {
 const router = express.Router();
 
 router.post("/create", createSavingBucket);
-
-router.get("/", getSavingBuckets);
+router.post("/list", getSavingBuckets);
 
 export default router;

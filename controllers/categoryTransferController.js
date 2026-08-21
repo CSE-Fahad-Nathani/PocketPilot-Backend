@@ -1,7 +1,12 @@
 import * as categoryTransferService from "../services/categoryTransferService.js";
+import {
+  assertCycleOwnedByUser,
+  requireUserId,
+} from "../utils/ownership.js";
 
 export const createTransfer = async (req, res) => {
   try {
+    const userId = requireUserId(req.body);
     const {
       cycleId,
       fromCategoryId,
@@ -11,13 +16,7 @@ export const createTransfer = async (req, res) => {
       note = "",
     } = req.body;
 
-    if (!cycleId) {
-      return res.status(400).json({
-        success: false,
-        message: "Cycle ID is required.",
-        data: null,
-      });
-    }
+    await assertCycleOwnedByUser(userId, cycleId);
 
     if (!fromCategoryId) {
       return res.status(400).json({
@@ -76,15 +75,10 @@ export const createTransfer = async (req, res) => {
 
 export const getTransfers = async (req, res) => {
   try {
-    const { cycleId } = req.query;
+    const userId = requireUserId(req.body);
+    const { cycleId } = req.body;
 
-    if (!cycleId) {
-      return res.status(400).json({
-        success: false,
-        message: "Cycle ID is required.",
-        data: null,
-      });
-    }
+    await assertCycleOwnedByUser(userId, cycleId);
 
     const transfers = await categoryTransferService.getTransfers(cycleId);
 
@@ -104,9 +98,19 @@ export const getTransfers = async (req, res) => {
 
 export const getTransferById = async (req, res) => {
   try {
-    const { id } = req.params;
+    const userId = requireUserId(req.body);
+    const { id } = req.body;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Transfer ID is required.",
+        data: null,
+      });
+    }
 
     const transfer = await categoryTransferService.getTransferById(id);
+    await assertCycleOwnedByUser(userId, transfer.cycle_id);
 
     return res.json({
       success: true,
@@ -124,6 +128,7 @@ export const getTransferById = async (req, res) => {
 
 export const updateTransfer = async (req, res) => {
   try {
+    const userId = requireUserId(req.body);
     const {
       id,
       fromCategoryId,
@@ -140,6 +145,9 @@ export const updateTransfer = async (req, res) => {
         data: null,
       });
     }
+
+    const existing = await categoryTransferService.getTransferById(id);
+    await assertCycleOwnedByUser(userId, existing.cycle_id);
 
     if (!fromCategoryId) {
       return res.status(400).json({
@@ -198,6 +206,7 @@ export const updateTransfer = async (req, res) => {
 
 export const deleteTransfer = async (req, res) => {
   try {
+    const userId = requireUserId(req.body);
     const { id } = req.body;
 
     if (!id) {
@@ -207,6 +216,9 @@ export const deleteTransfer = async (req, res) => {
         data: null,
       });
     }
+
+    const existing = await categoryTransferService.getTransferById(id);
+    await assertCycleOwnedByUser(userId, existing.cycle_id);
 
     const transfer = await categoryTransferService.deleteTransfer(id);
 

@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import pool from "./db.js";
+import authRoutes from "./routes/authRoutes.js";
 import cycleRoutes from "./routes/cycleRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import incomeRoutes from "./routes/incomeRoutes.js";
@@ -23,6 +24,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use("/api/auth", authRoutes);
 app.use("/api/cycles", cycleRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/income", incomeRoutes);

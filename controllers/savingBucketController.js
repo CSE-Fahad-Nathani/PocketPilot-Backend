@@ -1,12 +1,10 @@
 import * as savingBucketService from "../services/savingBucketService.js";
+import { requireUserId } from "../utils/ownership.js";
 
 export const createSavingBucket = async (req, res) => {
   try {
-    const {
-      name,
-      icon = "",
-      color = "",
-    } = req.body;
+    const userId = requireUserId(req.body);
+    const { name, icon = "", color = "" } = req.body;
 
     if (!name?.trim()) {
       return res.status(400).json({
@@ -17,6 +15,7 @@ export const createSavingBucket = async (req, res) => {
     }
 
     const bucket = await savingBucketService.createSavingBucket(
+      userId,
       name.trim(),
       icon,
       color
@@ -38,7 +37,8 @@ export const createSavingBucket = async (req, res) => {
 
 export const getSavingBuckets = async (req, res) => {
   try {
-    const buckets = await savingBucketService.getSavingBuckets();
+    const userId = requireUserId(req.body);
+    const buckets = await savingBucketService.getSavingBuckets(userId);
 
     return res.json({
       success: true,

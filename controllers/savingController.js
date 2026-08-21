@@ -1,7 +1,13 @@
 import * as savingService from "../services/savingService.js";
+import {
+  assertBucketOwnedByUser,
+  assertCycleOwnedByUser,
+  requireUserId,
+} from "../utils/ownership.js";
 
 export const createSaving = async (req, res) => {
   try {
+    const userId = requireUserId(req.body);
     const {
       cycleId,
       bucketId,
@@ -12,12 +18,10 @@ export const createSaving = async (req, res) => {
       note,
     } = req.body;
 
-    if (!cycleId) {
-      return res.status(400).json({
-        success: false,
-        message: "Cycle ID is required.",
-        data: null,
-      });
+    await assertCycleOwnedByUser(userId, cycleId);
+
+    if (bucketId) {
+      await assertBucketOwnedByUser(userId, bucketId);
     }
 
     if (!type) {
@@ -68,7 +72,7 @@ export const createSaving = async (req, res) => {
       data: saving,
     });
   } catch (error) {
-    return res.status(500).json({
+    return res.status(error.statusCode || 500).json({
       success: false,
       message: error.message,
       data: null,
@@ -78,7 +82,14 @@ export const createSaving = async (req, res) => {
 
 export const getAllSavings = async (req, res) => {
   try {
-    const savings = await savingService.getAllSavings();
+    const userId = requireUserId(req.body);
+    const { cycleId } = req.body;
+
+    if (cycleId) {
+      await assertCycleOwnedByUser(userId, cycleId);
+    }
+
+    const savings = await savingService.getAllSavings(userId, cycleId);
 
     return res.json({
       success: true,
@@ -86,7 +97,7 @@ export const getAllSavings = async (req, res) => {
       data: savings,
     });
   } catch (error) {
-    return res.status(500).json({
+    return res.status(error.statusCode || 500).json({
       success: false,
       message: error.message,
       data: null,
@@ -96,7 +107,23 @@ export const getAllSavings = async (req, res) => {
 
 export const getSavingById = async (req, res) => {
   try {
-    const saving = await savingService.getSavingById(req.params.id);
+    const userId = requireUserId(req.body);
+    const { id } = req.body;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Saving ID is required.",
+        data: null,
+      });
+    }
+
+    const saving = await savingService.getSavingById(id);
+    await assertCycleOwnedByUser(userId, saving.cycle_id);
+
+    if (saving.bucket_id) {
+      await assertBucketOwnedByUser(userId, saving.bucket_id);
+    }
 
     return res.json({
       success: true,
@@ -114,10 +141,27 @@ export const getSavingById = async (req, res) => {
 
 export const updateSaving = async (req, res) => {
   try {
-    const saving = await savingService.updateSaving(
-      req.params.id,
-      req.body
-    );
+    const userId = requireUserId(req.body);
+    const { id, bucketId } = req.body;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Saving ID is required.",
+        data: null,
+      });
+    }
+
+    const existing = await savingService.getSavingById(id);
+    await assertCycleOwnedByUser(userId, existing.cycle_id);
+
+    if (bucketId) {
+      await assertBucketOwnedByUser(userId, bucketId);
+    } else if (existing.bucket_id) {
+      await assertBucketOwnedByUser(userId, existing.bucket_id);
+    }
+
+    const saving = await savingService.updateSaving(id, req.body);
 
     return res.json({
       success: true,
@@ -135,7 +179,21 @@ export const updateSaving = async (req, res) => {
 
 export const deleteSaving = async (req, res) => {
   try {
-    const saving = await savingService.deleteSaving(req.params.id);
+    const userId = requireUserId(req.body);
+    const { id } = req.body;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Saving ID is required.",
+        data: null,
+      });
+    }
+
+    const existing = await savingService.getSavingById(id);
+    await assertCycleOwnedByUser(userId, existing.cycle_id);
+
+    const saving = await savingService.deleteSaving(id);
 
     return res.json({
       success: true,
