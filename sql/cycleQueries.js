@@ -56,7 +56,8 @@ SELECT
     cycle_name,
     total_income,
     total_expense,
-    total_saved
+    total_saved,
+    planned_budget
 FROM salary_cycles
 WHERE id = $1
 AND user_id = $2

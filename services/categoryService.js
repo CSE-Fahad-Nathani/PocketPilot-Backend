@@ -1,5 +1,6 @@
 import pool from "../db.js";
 import { recalculateCycleTotals } from "./cycleTotalsService.js";
+import { isUnassignedLeftCategory } from "../constants/categoryConstants.js";
 
 import {
   CREATE_CATEGORY,
@@ -178,6 +179,18 @@ export const importCategoriesFromCycle = async (
     throw error;
   }
 
+  const importableSource = sourceResult.rows.filter(
+    (category) => !isUnassignedLeftCategory(category)
+  );
+
+  if (!importableSource.length) {
+    const error = new Error(
+      "Selected budgets cannot be imported (system budgets are excluded)."
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
   const existing = await pool.query(GET_CATEGORIES, [targetCycleId]);
   const existingNames = new Set(
     existing.rows.map((row) => String(row.name).toLowerCase())
@@ -186,7 +199,7 @@ export const importCategoriesFromCycle = async (
   const created = [];
   let skipped = 0;
 
-  for (const category of sourceResult.rows) {
+  for (const category of importableSource) {
     const nameKey = String(category.name).toLowerCase();
 
     if (existingNames.has(nameKey)) {
