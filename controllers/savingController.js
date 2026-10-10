@@ -80,6 +80,32 @@ export const createSaving = async (req, res) => {
   }
 };
 
+export const addManualFunds = async (req, res) => {
+  try {
+    const userId = requireUserId(req.body);
+    const { amount, transactionDate, note, title } = req.body;
+
+    const saving = await savingService.addManualFunds(userId, {
+      amount,
+      transactionDate,
+      note,
+      title,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Funds added to pending savings.",
+      data: saving,
+    });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message,
+      data: null,
+    });
+  }
+};
+
 export const getAllSavings = async (req, res) => {
   try {
     const userId = requireUserId(req.body);

@@ -6,6 +6,7 @@ import {
   UPDATE_SAVING,
   DELETE_SAVING,
 } from "../sql/savingQueries.js";
+import { GET_ACTIVE_CYCLE } from "../sql/cycleQueries.js";
 
 
 export const createSaving = async (
@@ -33,6 +34,50 @@ export const createSaving = async (
   ]);
 
   return result.rows[0];
+};
+
+/**
+ * Additive feature: create a pending DEPOSIT from extra funds.
+ * Does not change cycle income/expense totals or existing savings.
+ */
+export const addManualFunds = async (
+  userId,
+  { amount, transactionDate, note, title } = {}
+) => {
+  const numericAmount = Number(amount);
+
+  if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+    const error = new Error("Enter a valid amount greater than 0.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (!transactionDate) {
+    const error = new Error("Transaction date is required.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const activeResult = await pool.query(GET_ACTIVE_CYCLE, [userId]);
+  const active = activeResult.rows[0];
+
+  if (!active?.id) {
+    const error = new Error(
+      "Start an active cycle before adding funds to savings."
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return createSaving({
+    cycleId: active.id,
+    bucketId: null,
+    type: "DEPOSIT",
+    title: String(title || "Manual top-up").trim() || "Manual top-up",
+    amount: numericAmount,
+    transactionDate,
+    note: note?.trim() || "Added directly to pending savings.",
+  });
 };
 
 export const getAllSavings = async (userId, cycleId = null) => {

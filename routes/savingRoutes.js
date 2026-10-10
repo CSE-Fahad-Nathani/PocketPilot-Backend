@@ -1,6 +1,7 @@
 import express from "express";
 import {
   createSaving,
+  addManualFunds,
   getAllSavings,
   getSavingById,
   updateSaving,
@@ -10,6 +11,7 @@ import {
 const router = express.Router();
 
 router.post("/create", createSaving);
+router.post("/add-funds", addManualFunds);
 router.post("/list", getAllSavings);
 router.post("/get", getSavingById);
 router.post("/update", updateSaving);
